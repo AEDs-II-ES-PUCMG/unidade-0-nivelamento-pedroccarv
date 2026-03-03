@@ -5,6 +5,8 @@ public class ProdutoPerecivel extends Produto {
     private static final double DESCONTO = 0.25;
     private static final int PRAZO_DESCONTO = 7;
     private LocalDate dataDeValidade;
+
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     
 
     protected ProdutoPerecivel(String desc, double precoCusto, double margemLucro, LocalDate validade) {
@@ -27,8 +29,15 @@ public class ProdutoPerecivel extends Produto {
 
     @Override
     public String toString() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return super.toString() + String.format(", Validade: %s", dataDeValidade.format(formatter));
+    }
+
+    @Override
+    public String gerarDadosTexto() {
+        String precoFormatado = String.format("%.2f", precoCusto).replace(",", ".");
+        String margemFormatada = String.format(".2f", margemLucro).replace(",", ".");
+        String dataFormatada = formatter.format(dataDeValidade);
+        return String.format("1;%s;%s;%s", descricao, precoFormatado, margemFormatada, dataFormatada);
     }
 
 }
