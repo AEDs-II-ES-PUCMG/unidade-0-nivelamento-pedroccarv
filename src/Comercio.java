@@ -1,8 +1,12 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class Comercio {
@@ -53,20 +57,30 @@ public class Comercio {
         int i, numProdutos;
         String linha;
         Produto produto;
-        Produto[] produtosCadastrados = new Produto[MAX_NOVOS_PRODUTOS];
+        Produto[] produtosCadastrados = null;
 
         try {
             arquivo = new Scanner(new File(nomeArquivoDados), Charset.forName("UTF-8"));
             numProdutos = Integer.parseInt(arquivo.nextLine());
-            for (i=0; i<numProdutos && i < MAX_NOVOS_PRODUTOS;i++){
+            produtosCadastrados = new Produto[numProdutos + MAX_NOVOS_PRODUTOS];
+            for (i=0; i<numProdutos && i < numProdutos + MAX_NOVOS_PRODUTOS;i++){
                 linha = arquivo.nextLine();
                 produto = Produto.criarDoTexto(linha);
                 produtosCadastrados[i] = produto;
             }
+            quantosProdutos = numProdutos;
         } catch (IOException e) {
-            produtosCadastrados = null;
+            produtosCadastrados = new Produto[0];
+            quantosProdutos = 0;
         } finally {
-            arquivo.close();
+            if (arquivo != null) arquivo.close();
+        }
+        return produtosCadastrados;
+    }
+    static void listarTodosOsProdutos(){
+        cabecalho();
+        for (int i = 0; i < quantosProdutos; i++) {
+            System.out.println((i+1) + " - " + produtosCadastrados[i].toString());
         }
     }
     static void localizarProdutos(){
@@ -78,16 +92,74 @@ public class Comercio {
         cabecalho();
         System.out.println("Informe a descricao do produto desejado");
         descricao = teclado.nextLine();
-        produtoALocalizar = new ProdutoNaoPerecivel(descricao, 0.01);
+        produtoALocalizar = new ProdutoNaoPerecivel(descricao, 0.01, 0.01);
         for (int i = 0; i < quantosProdutos && !localizado; i++) {
             if (produtosCadastrados[i].equals(produtoALocalizar)) {
                 localizado = true;
                 produto = produtosCadastrados[i];
             }
         }
-        if (!localizado) {
+        if (localizado) {
+            System.out.println(produto.toString());
+        } else {
             System.out.println("Produto nao localizado");
         }
     }
-
+    static void cadastrarProduto(){
+        cabecalho();
+        System.out.println("Cadastro de novo produto");
+        System.out.println("1 - Produto Nao Perecivel");
+        System.out.println("2 - Produto Perecivel");
+        System.out.print("Digite o tipo: ");
+        int tipo = Integer.parseInt(teclado.nextLine());
+        System.out.print("Descricao: ");
+        String descricao = teclado.nextLine();
+        System.out.print("Preco de Custo: ");
+        double precoCusto = Double.parseDouble(teclado.nextLine());
+        System.out.print("Margem de Lucro: ");
+        double margemLucro = Double.parseDouble(teclado.nextLine());
+        Produto novoProduto = null;
+        if (tipo == 1) {
+            novoProduto = new ProdutoNaoPerecivel(descricao, precoCusto, margemLucro);
+        } else if (tipo == 2) {
+            System.out.print("Data de Validade (dd/MM/yyyy): ");
+            String dataStr = teclado.nextLine();
+            LocalDate dataValidade = LocalDate.parse(dataStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            novoProduto = new ProdutoPerecivel(descricao, precoCusto, margemLucro, dataValidade);
+        }
+        if (novoProduto != null && quantosProdutos < produtosCadastrados.length) {
+            produtosCadastrados[quantosProdutos] = novoProduto;
+            quantosProdutos++;
+            System.out.println("Produto cadastrado com sucesso!");
+        } else {
+            System.out.println("Erro ao cadastrar produto.");
+        }
+    }
+    public static void salvarProdutos(String nomeArquivo){
+        try (PrintWriter writer = new PrintWriter(new FileWriter(nomeArquivo, Charset.forName("UTF-8")))) {
+            writer.println(quantosProdutos);
+            for (int i = 0; i < quantosProdutos; i++) {
+                writer.println(produtosCadastrados[i].gerarDadosTexto());
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar produtos: " + e.getMessage());
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        teclado = new Scanner(System.in, Charset.forName("ISO-8859-2"));
+        nomeArquivoDados = "dadosProdutos.csv";
+        produtosCadastrados = lerProdutos(nomeArquivoDados);
+        int opcao = -1;
+        do{
+            opcao = menu();
+            switch (opcao) {
+                case 1 -> listarTodosOsProdutos();
+                case 2 -> localizarProdutos();
+                case 3 -> cadastrarProduto();
+            }
+            pausa();
+        }while(opcao !=0);
+        salvarProdutos(nomeArquivoDados);
+        teclado.close();
+    }
 }

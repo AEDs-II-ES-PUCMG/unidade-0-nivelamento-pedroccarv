@@ -35,9 +35,9 @@ public class ProdutoPerecivel extends Produto {
     @Override
     public String gerarDadosTexto() {
         String precoFormatado = String.format("%.2f", precoCusto).replace(",", ".");
-        String margemFormatada = String.format(".2f", margemLucro).replace(",", ".");
+        String margemFormatada = String.format("%.2f", margemLucro).replace(",", ".");
         String dataFormatada = formatter.format(dataDeValidade);
-        return String.format("1;%s;%s;%s", descricao, precoFormatado, margemFormatada, dataFormatada);
+        return String.format("2;%s;%s;%s;%s", descricao, precoFormatado, margemFormatada, dataFormatada);
     }
 
 }
